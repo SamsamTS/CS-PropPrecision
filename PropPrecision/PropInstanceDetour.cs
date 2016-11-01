@@ -9,184 +9,97 @@ namespace PropPrecision
     public struct PropInstanceDetour
     {
         [RedirectMethod]
-        public Vector3 Position
+        public unsafe Vector3 Position
         {
             get
             {
-                if (Singleton<ToolManager>.instance.m_properties.m_mode == ItemClass.Availability.AssetEditor)
+                fixed (void* pointer = &this)
                 {
-                    Vector3 result;
-                    result.x = (float)this.m_posX * 0.0164794922f;
-                    result.y = (float)this.m_posY * 0.015625f;
-                    result.z = (float)this.m_posZ * 0.0164794922f;
-                    return result;
-                }
-                else
-                {
-                    Vector3 result;
-                    //Begin Mod
-                    //result.x = (float)this.m_posX * 0.263671875f;
-                    //result.y = (float)this.m_posY * 0.015625f;
-                    //result.z = (float)this.m_posZ * 0.263671875f;
+                    PropInstance* prop = (PropInstance*)pointer;
 
-                    if (Data.data.ContainsKey(m_propIndex))
+                    if (Singleton<ToolManager>.instance.m_properties.m_mode == ItemClass.Availability.AssetEditor)
                     {
-                        Data.PrecisionData precisionData = (Data.PrecisionData)Data.data[m_propIndex];
-
-                        result.x = ((float)this.m_posX + Mathf.Sign(this.m_posX) * (float)precisionData.x / (float)ushort.MaxValue) * 0.263671875f;
-                        result.y = (float)this.m_posY * 0.015625f;
-                        result.z = ((float)this.m_posZ + Mathf.Sign(this.m_posZ) * (float)precisionData.z / (float)ushort.MaxValue) * 0.263671875f;
+                        Vector3 result;
+                        result.x = (float)prop->m_posX * 0.0164794922f;
+                        result.y = (float)prop->m_posY * 0.015625f;
+                        result.z = (float)prop->m_posZ * 0.0164794922f;
+                        return result;
                     }
                     else
                     {
-                        result.x = (float)this.m_posX * 0.263671875f;
-                        result.y = (float)this.m_posY * 0.015625f;
-                        result.z = (float)this.m_posZ * 0.263671875f;
-                    }
-                    //EndMod
-                    return result;
-                }
-            }
-            set
-            {
-                if (Singleton<ToolManager>.instance.m_properties.m_mode == ItemClass.Availability.AssetEditor)
-                {
-                    this.m_posX = (short)Mathf.Clamp(Mathf.RoundToInt(value.x * 60.68148f), -32767, 32767);
-                    this.m_posZ = (short)Mathf.Clamp(Mathf.RoundToInt(value.z * 60.68148f), -32767, 32767);
-                    this.m_posY = (ushort)Mathf.Clamp(Mathf.RoundToInt(value.y * 64f), 0, 65535);
-                }
-                else
-                {
-                    this.m_posX = (short)Mathf.Clamp((int)(value.x * 3.79259253f), -32767, 32767);
-                    this.m_posZ = (short)Mathf.Clamp((int)(value.z * 3.79259253f), -32767, 32767);
-                    this.m_posY = (ushort)Mathf.Clamp(Mathf.RoundToInt(value.y * 64f), 0, 65535);
-                    //Begin Mod
-                        Data.PrecisionData precisionData = new Data.PrecisionData();
-                        precisionData.x = (ushort)(ushort.MaxValue * Mathf.Abs(value.x * 3.79259253f - (float)this.m_posX));
-                        precisionData.z = (ushort)(ushort.MaxValue * Mathf.Abs(value.z * 3.79259253f - (float)this.m_posZ));
-                        Data.data[m_propIndex] = precisionData;
-                    //EndMod
-                }
-            }
-        }
+                        Vector3 result;
+                        //Begin Mod
+                        //result.x = (float)this.m_posX * 0.263671875f;
+                        //result.y = (float)this.m_posY * 0.015625f;
+                        //result.z = (float)this.m_posZ * 0.263671875f;
 
-        private ushort m_propIndex
-        {
-            get
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
+                        ushort index;
                         fixed (PropInstance* buffer = PropManager.instance.m_props.m_buffer)
                         {
-                            PropInstance* prop = (PropInstance*)pointer;
-                            return (ushort)(prop - buffer);
+                            index = (ushort)(prop - buffer);
                         }
-                    }
-                }
-            }
-        }
 
-        private ushort m_infoIndex
-        {
-            get
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        return prop->m_infoIndex;
+                        if (Data.data.ContainsKey(index))
+                        {
+                            Data.PrecisionData precisionData = (Data.PrecisionData)Data.data[index];
+
+                            if (prop->m_posX > 0)
+                            {
+                                result.x = ((float)prop->m_posX + (float)precisionData.x / (float)ushort.MaxValue) * 0.263671875f;
+                            }
+                            else
+                            {
+                                result.x = ((float)prop->m_posX - (float)precisionData.x / (float)ushort.MaxValue) * 0.263671875f;
+                            }
+
+                            if (prop->m_posZ > 0)
+                            {
+                                result.z = ((float)prop->m_posZ + (float)precisionData.z / (float)ushort.MaxValue) * 0.263671875f;
+                            }
+                            else
+                            {
+                                result.z = ((float)prop->m_posZ - (float)precisionData.z / (float)ushort.MaxValue) * 0.263671875f;
+                            }
+                            result.y = (float)prop->m_posY * 0.015625f;
+                        }
+                        else
+                        {
+                            result.x = (float)prop->m_posX * 0.263671875f;
+                            result.y = (float)prop->m_posY * 0.015625f;
+                            result.z = (float)prop->m_posZ * 0.263671875f;
+                        }
+                        //EndMod
+                        return result;
                     }
                 }
             }
             set
             {
-                unsafe
+                fixed (void* pointer = &this)
                 {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        prop->m_infoIndex = value;
-                    }
-                }
-            }
-        }
+                    PropInstance* prop = (PropInstance*)pointer;
 
-        private short m_posX
-        {
-            get
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
+                    if (Singleton<ToolManager>.instance.m_properties.m_mode == ItemClass.Availability.AssetEditor)
                     {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        return prop->m_posX;
+                        prop->m_posX = (short)Mathf.Clamp(Mathf.RoundToInt(value.x * 60.68148f), -32767, 32767);
+                        prop->m_posZ = (short)Mathf.Clamp(Mathf.RoundToInt(value.z * 60.68148f), -32767, 32767);
+                        prop->m_posY = (ushort)Mathf.Clamp(Mathf.RoundToInt(value.y * 64f), 0, 65535);
                     }
-                }
-            }
-            set
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
+                    else
                     {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        prop->m_posX = value;
-                    }
-                }
-            }
-        }
+                        prop->m_posX = (short)Mathf.Clamp(/* Mathf.RoundToInt */(int)(value.x * 3.79259253f), -32767, 32767);
+                        prop->m_posZ = (short)Mathf.Clamp(/* Mathf.RoundToInt */(int)(value.z * 3.79259253f), -32767, 32767);
+                        prop->m_posY = (ushort)Mathf.Clamp(Mathf.RoundToInt(value.y * 64f), 0, 65535);
+                        //Begin Mod
+                        Data.PrecisionData precisionData = new Data.PrecisionData();
+                        precisionData.x = (ushort)(ushort.MaxValue * Mathf.Abs(value.x * 3.79259253f - (float)prop->m_posX));
+                        precisionData.z = (ushort)(ushort.MaxValue * Mathf.Abs(value.z * 3.79259253f - (float)prop->m_posZ));
 
-        private ushort m_posY
-        {
-            get
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        return prop->m_posY;
-                    }
-                }
-            }
-            set
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        prop->m_posY = value;
-                    }
-                }
-            }
-        }
-
-        private short m_posZ
-        {
-            get
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        return prop->m_posZ;
-                    }
-                }
-            }
-            set
-            {
-                unsafe
-                {
-                    fixed (void* pointer = &this)
-                    {
-                        PropInstance* prop = (PropInstance*)pointer;
-                        prop->m_posZ = value;
+                        fixed (PropInstance* buffer = PropManager.instance.m_props.m_buffer)
+                        {
+                            Data.data[(ushort)(prop - buffer)] = precisionData;
+                        }
+                        //EndMod
                     }
                 }
             }

@@ -82,7 +82,6 @@ namespace PropPrecision.Redirection
                             return ((RedirectMethodAttribute)redirectAttributes[0]).OnCreated == onCreated;
                         }))
             {
-//                UnityEngine.Debug.Log($"Redirecting {targetType.Name}#{method.Name}...");
                 DebugUtils.Log("Redirecting " + targetType.Name + "#" + method.Name);
                 RedirectMethod(targetType, method, redirects);
             }
@@ -100,7 +99,6 @@ namespace PropPrecision.Redirection
                             return ((RedirectMethodAttribute)redirectAttributes[0]).OnCreated == onCreated;
                         }))
             {
-                //                UnityEngine.Debug.Log($"Redirecting {targetType.Name}#{method.Name}...");
                 var getMethod = property.GetGetMethod();
                 if (getMethod != null)
                 {
@@ -132,8 +130,36 @@ namespace PropPrecision.Redirection
                             return false;
                         }))
             {
-//                UnityEngine.Debug.Log($"Redirecting reverse {targetType.Name}#{method.Name}...");
+                DebugUtils.Log("Redirecting reverse " + targetType.Name + "#" + method.Name);
                 RedirectMethod(targetType, method, redirects, true);
+            }
+
+            foreach (
+                var property in
+                    type.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Where(property =>
+                        {
+                            var redirectAttributes = property.GetCustomAttributes(typeof(RedirectReverseAttribute), false);
+                            if (redirectAttributes.Length == 1)
+                            {
+                                return ((RedirectReverseAttribute)redirectAttributes[0]).OnCreated == onCreated;
+                            }
+                            return false;
+                        }))
+            {
+                var getMethod = property.GetGetMethod();
+                if (getMethod != null)
+                {
+                    DebugUtils.Log("Redirecting reverse " + targetType.Name + "#" + getMethod.Name);
+                    RedirectMethod(targetType, getMethod, redirects, true);
+                }
+
+                var setMethod = property.GetSetMethod();
+                if (setMethod != null)
+                {
+                    DebugUtils.Log("Redirecting reverse " + targetType.Name + "#" + setMethod.Name);
+                    RedirectMethod(targetType, setMethod, redirects, true);
+                }
             }
         }
 

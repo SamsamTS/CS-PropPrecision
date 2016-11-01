@@ -61,7 +61,10 @@ namespace PropPrecision
                     value.x = (ushort)s.ReadUInt16();
                     value.z = (ushort)s.ReadUInt16();
 
-                    data[prop] = value;
+                    if ((PropManager.instance.m_props.m_buffer[prop].m_flags & (ushort)PropInstance.Flags.Created) == (ushort)PropInstance.Flags.Created)
+                    {
+                        data[prop] = value;
+                    }
                 }
             }
             catch (Exception e)
